@@ -100,7 +100,12 @@ public class Tree<E extends Comparable<? super E>> {
         if (root == null)
             return (treeName + " Empty tree\n");
         else
-            return "Not written yet " + toString2();
+            return toString(root);
+    }
+
+    private String toString(BinaryNode<E> n) {
+        if (n == null) return null;
+        return "\t" + toString(n.right) + "\n" + n.element.toString() + "\n" + "\t" + toString(n.left) + "\n";
     }
 
     /**

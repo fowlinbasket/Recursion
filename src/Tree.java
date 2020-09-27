@@ -100,13 +100,9 @@ public class Tree<E extends Comparable<? super E>> {
         if (root == null)
             return (treeName + " Empty tree\n");
         else
-            return toString(root);
+            return treeName + ":\n" + toString(root, "   ");
     }
 
-    private String toString(BinaryNode<E> n) {
-        if (n == null) return null;
-        return "\t" + toString(n.right) + "\n" + n.element.toString() + "\n" + "\t" + toString(n.left) + "\n";
-    }
 
     /**
      * This runs in  O(n)
@@ -135,6 +131,10 @@ public class Tree<E extends Comparable<? super E>> {
      * Print all paths from root to leaves
      */
     public void printAllPaths() {
+        printAllPaths(root);
+    }
+
+    private void printAllPaths(BinaryNode<E> n) {
 
     }
 
@@ -335,7 +335,9 @@ public class Tree<E extends Comparable<? super E>> {
      * @param t the node that roots the subtree.
      */
     private String toString(BinaryNode<E> t, String indent) {
-        return "Need print pretty";
+        if (t != null) return toString(t.right, indent + "   ") + "\n" + indent + t.toString() +
+                toString(t.left, indent + "   ");
+        else return "";
     }
 
     private Integer isSum(BinaryNode<E> curr) {
@@ -366,7 +368,7 @@ public class Tree<E extends Comparable<? super E>> {
             //sb.append("Node:");
             sb.append(element);
             if (parent == null) {
-                sb.append("[]");
+                sb.append("[no parent]");
             } else {
                 sb.append("[");
                 sb.append(parent.element);

@@ -162,19 +162,24 @@ public class Tree<E extends Comparable<? super E>> {
 
     private void printAllPaths(BinaryNode<E> n, ArrayList<BinaryNode<E>> nodes) {
         if (n != null) {
+            // add node to path
             nodes.add(n);
+            // add left side to path
             if (n.left != null) printAllPaths(n.left, new ArrayList<>(nodes));
+            // add right side to path
             if (n.right != null) printAllPaths(n.right, new ArrayList<>(nodes));
+            // recursion has reached a leaf node
             else if (n.left == null) {
+                // print the path that reached this node
                 System.out.print("[");
                 for (BinaryNode<E> node : nodes) {
                     if (node.left == null && node.right == null) System.out.print(node.element);
                     else System.out.print(node.element + ", ");
                 }
-                System.out.print("]");
-                System.out.println();
+                System.out.print("]\n");
             }
         }
+        // remove the leaf node
         nodes.remove(n);
     }
 
@@ -185,9 +190,26 @@ public class Tree<E extends Comparable<? super E>> {
      */
     public Integer countBST() {
         if (root == null) return 0;
-        return -1;
+        return countBST(root);
     }
 
+    private Integer countBST(BinaryNode<E> n) {
+        // node doesn't exist
+        if (n == null) return 0;
+        // node is a leaf
+        if (n.left == null && n.right == null) return 1;
+        // node has one child
+        if (n.left == null && n.right.element.compareTo(n.element) > 0 ||
+                n.right == null && n.left.element.compareTo(n.element) <= 0) return 1;
+        // node has two children
+        assert n.left != null;
+        assert n.right != null;
+        if (n.left.element.compareTo(n.element) <= 0 && n.right.element.compareTo(n.element) > 0)
+            // add 1 and continue in the recursion
+            return 1 + countBST(n.left) + countBST(n.right);
+        // add the sum of both sides together
+        return countBST(n.left) + countBST(n.right);
+    }
     /**
      * Insert into a bst tree; duplicates are allowed
      *
@@ -375,8 +397,10 @@ public class Tree<E extends Comparable<? super E>> {
      * @param t the node that roots the subtree.
      */
     private String toString(BinaryNode<E> t, String indent) {
+        // return the right tree, root, and left tree
         if (t != null) return toString(t.right, indent + "   ") + "\n" + indent + t.toString() +
                 toString(t.left, indent + "   ");
+        // return an empty string if node is null
         else return "";
     }
 
@@ -460,19 +484,19 @@ public class Tree<E extends Comparable<? super E>> {
         tree1.printAllPaths();
 
 
-//        // Assignment Problem 4
-//        Integer[] v4 = {66, 75, -15, 3, 65, -83, 83, -10, 16, -7, 70, 200, 71, 90};
-//        Tree<Integer> treeA = new Tree<Integer>("TreeA");
-//        treeA.createTreeByLevel(v4, "TreeA");
-//        System.out.println(treeA.toString());
-//        System.out.println("treeA Contains BST: " + treeA.countBST());
-//
-//        Integer[] a = {21, 8, 5, 6, 7, 19, 10, 40, 43, 52, 12, 60};
-//        Tree<Integer> treeB = new Tree<Integer>("TreeB");
-//        treeB.createTreeByLevel(a, "TreeB");
-//        System.out.println(treeB.toString());
-//        System.out.println("treeB Contains BST: " + treeB.countBST());
-//
+        // Assignment Problem 4
+        Integer[] v4 = {66, 75, -15, 3, 65, -83, 83, -10, 16, -7, 70, 200, 71, 90};
+        Tree<Integer> treeA = new Tree<Integer>("TreeA");
+        treeA.createTreeByLevel(v4, "TreeA");
+        System.out.println(treeA.toString());
+        System.out.println("treeA Contains BST: " + treeA.countBST());
+
+        Integer[] a = {21, 8, 5, 6, 7, 19, 10, 40, 43, 52, 12, 60};
+        Tree<Integer> treeB = new Tree<Integer>("TreeB");
+        treeB.createTreeByLevel(a, "TreeB");
+        System.out.println(treeB.toString());
+        System.out.println("treeB Contains BST: " + treeB.countBST());
+
 //        // Assignment Problem 5
 //
 //        treeB.pruneK(60);

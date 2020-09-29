@@ -157,11 +157,25 @@ public class Tree<E extends Comparable<? super E>> {
      * Print all paths from root to leaves
      */
     public void printAllPaths() {
-        printAllPaths(root);
+        printAllPaths(root, new ArrayList<>());
     }
 
-    private void printAllPaths(BinaryNode<E> n) {
-
+    private void printAllPaths(BinaryNode<E> n, ArrayList<BinaryNode<E>> nodes) {
+        if (n != null) {
+            nodes.add(n);
+            if (n.left != null) printAllPaths(n.left, new ArrayList<>(nodes));
+            if (n.right != null) printAllPaths(n.right, new ArrayList<>(nodes));
+            else if (n.left == null) {
+                System.out.print("[");
+                for (BinaryNode<E> node : nodes) {
+                    if (node.left == null && node.right == null) System.out.print(node.element);
+                    else System.out.print(node.element + ", ");
+                }
+                System.out.print("]");
+                System.out.println();
+            }
+        }
+        nodes.remove(n);
     }
 
     /**

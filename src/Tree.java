@@ -49,7 +49,25 @@ public class Tree<E extends Comparable<? super E>> {
     public static void getLeaves(Integer[] preorder, int beg, int end, ArrayList<Integer> leaves) {
     }
 
-
+    public BinaryNode<E> removeBinaryNode(BinaryNode<E> n) {
+        BinaryNode<E> toRemove = n;
+        // node doesn't exist
+        if (n == null) return null;
+        // node is a leaf node
+        if (n.left == null && n.right == null) n = null;
+        // node has a left child and no right child
+        else if (n.left != null && n.right == null) n = n.left;
+        // node has a right child and no left child
+        else if (n.left == null) n = n.right;
+        // node has two children
+        else {
+            // node changes to its in-order successor
+            n = leftMost(n.right);
+            // now that the in-order successor has moved, delete it
+            removeBinaryNode(leftMost(n.right));
+        }
+        return toRemove;
+    }
 
     /**
      * Create Tree By Level.  Parents are set.
@@ -116,7 +134,7 @@ public class Tree<E extends Comparable<? super E>> {
 
     /**
      * Find successor of "curr" node in tree
-     *
+     * Big Oh complexity = O(log(n))
      * @return String representation of the successor
      */
     public String successor() {
@@ -154,6 +172,7 @@ public class Tree<E extends Comparable<? super E>> {
     }
 
     /**
+     * Big Oh complexity = O(n)
      * Print all paths from root to leaves
      */
     public void printAllPaths() {
@@ -185,7 +204,7 @@ public class Tree<E extends Comparable<? super E>> {
 
     /**
      * Counts all non-null binary search trees embedded in tree
-     *
+     * Big Oh complexity = 2^n
      * @return Count of embedded binary search trees
      */
     public Integer countBST() {
@@ -216,8 +235,20 @@ public class Tree<E extends Comparable<? super E>> {
      * @param x the item to insert.
      */
     public void bstInsert(E x) {
-
         root = bstInsert(x, root, null);
+    }
+
+    public BinaryNode<E> find(E element) {
+        if (!this.contains(element)) return null;
+        return find(root, element);
+    }
+
+    private BinaryNode<E> find(BinaryNode<E> n, E element) {
+        if (n == null) return null;
+        if (n.element.compareTo(element) == 0) return n;
+        n = find(n.left, element);
+        n = find(n.right, element);
+        return n;
     }
 
     /**
@@ -227,16 +258,39 @@ public class Tree<E extends Comparable<? super E>> {
      * @return true if found.
      */
     public boolean contains(E item) {
-
         return bstContains(item, root);
     }
 
     /**
      * Remove all paths from tree that sum to less than given value
-     *
-     * @param sum: minimum path sum allowed in final tree
+     * Big Oh = O(n)
+     * @param k: minimum path sum allowed in final tree
      */
-    public void pruneK(Integer sum) {
+    public void pruneK(BinaryNode<Integer> root, Integer k) {
+        INT sum = new INT(0);
+        pruneK(root, k, new INT(0));
+    }
+    private static BinaryNode<Integer> pruneK(BinaryNode<Integer> n, Integer k, INT sum) {
+        // node doesn't exist
+        if (n == null) return null;
+        // initialize left and right sons
+        INT leftSum = new INT(sum.v + n.element);
+        INT rightSum = new INT(leftSum.v);
+        // prune left and right subtrees
+        n.left = pruneK(n.left, k, leftSum);
+        n.right = pruneK(n.right, k, rightSum);
+        // get max of left and right sums
+        sum.v = Math.max(leftSum.v, rightSum.v);
+        // delete node if sum is smaller than k
+        if (sum.v < k) n = null;
+        return n;
+    }
+
+    private static class INT {
+        int v;
+        public INT(int a) {
+            v = a;
+        }
     }
 
     /**
@@ -246,23 +300,37 @@ public class Tree<E extends Comparable<? super E>> {
      * @param b second node
      * @return String representation of ancestor
      */
-    public String lca(E a, E b) {
-        BinaryNode<E> ancestor = null;
+//    public String lca(E a, E b) {
+//        BinaryNode<E> ancestor = null;
 //        if (a.compareTo(b) < 0) {
 //            ancestor = lca(root, a, b);
 //        } else {
 //            ancestor = lca(root, b, a);
 //        }
-        if (ancestor == null) return "none";
-        else return ancestor.toString();
-    }
+//        if (ancestor == null) return "none";
+//        else return ancestor.toString();
+//    }
+//
+//    private BinaryNode<E> lca(BinaryNode<E> n, E a, E b) {
+//        // node doesn't exist
+//        if (n == null) return null;
+//        // a does not exist (will return null if b doesn't exist either)
+//        if (this.find(a) == null) return this.find(b);
+//        // b does not exist (will return null is a doesn't exist either)
+//        if (this.find(b) == null) return this.find(a);
+//        // a and b both exist
+//        else {
+//
+//        }
+//    }
 
     /**
      * Balance the tree
      */
     public void balanceTree() {
-        //root = balanceTree(root);
+//        root = balanceTree(root);
     }
+
 
     /**
      * In a BST, keep only nodes between range
@@ -392,7 +460,7 @@ public class Tree<E extends Comparable<? super E>> {
 
     /**
      * Internal method to return a string of items in the tree in order
-     * This routine runs in O(??)
+     * This routine runs in O(2^n)
      *
      * @param t the node that roots the subtree.
      */
@@ -497,31 +565,31 @@ public class Tree<E extends Comparable<? super E>> {
         System.out.println(treeB.toString());
         System.out.println("treeB Contains BST: " + treeB.countBST());
 
-//        // Assignment Problem 5
-//
-//        treeB.pruneK(60);
-//        treeB.changeName("treeB after pruning 60");
-//        System.out.println(treeB.toString());
-//        treeA.pruneK(200);
-//        treeA.changeName("treeA after pruning 200");
-//        System.out.println(treeA.toString());
-//
+        // Assignment Problem 5
+
+        treeB.pruneK(treeB.root, 60);
+        treeB.changeName("treeB after pruning 60");
+        System.out.println(treeB.toString());
+        treeA.pruneK(treeA.root, 200);
+        treeA.changeName("treeA after pruning 200");
+        System.out.println(treeA.toString());
+
 //        // Assignment Problem 6
 //
 //        System.out.println(tree1.toString());
 //        System.out.println("tree1 Least Common Ancestor of (56,61) " + tree1.lca(56, 61) + ENDLINE);
 //
 //        System.out.println("tree1 Least Common Ancestor of (6,25) " + tree1.lca(6, 25) + ENDLINE);
-//
-//        // Assignment Problem 7
-//        Integer[] v7 = {20, 15, 10, 5, 8, 2, 100, 28, 42};
-//        Tree<Integer> tree7 = new Tree<>(v7, "Tree7:");
-//
-//        System.out.println(tree7.toString());
-//        tree7.balanceTree();
-//        tree7.changeName("tree7 after balancing");
-//        System.out.println(tree7.toString());
-//
+
+        // Assignment Problem 7
+        Integer[] v7 = {20, 15, 10, 5, 8, 2, 100, 28, 42};
+        Tree<Integer> tree7 = new Tree<>(v7, "Tree7:");
+
+        System.out.println(tree7.toString());
+        tree7.balanceTree();
+        tree7.changeName("tree7 after balancing");
+        System.out.println(tree7.toString());
+
 //        // Assignment Problem 8
 //        System.out.println(tree1.toString());
 //        tree1.keepRange(10, 50);

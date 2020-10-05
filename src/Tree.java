@@ -2,6 +2,7 @@
 // Throws UnderflowException as appropriate
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -21,6 +22,8 @@ public class Tree<E extends Comparable<? super E>> {
     private BinaryNode<E> root;  // Root of tree
     private BinaryNode<E> curr;  // Last node accessed in tree
     private String treeName;     // Name of tree
+    private E[] sortedArr;
+    private int height;
 
     /**
      * Create an empty tree
@@ -41,8 +44,10 @@ public class Tree<E extends Comparable<? super E>> {
     public Tree(E[] arr, String label) {
         root = null;
         treeName = label;
-        for (int i = 0; i < arr.length; i++) {
-            bstInsert(arr[i]);
+        this.sortedArr = arr.clone();
+        Arrays.sort(sortedArr);
+        for (E item : arr) {
+            bstInsert(item);
         }
     }
 
@@ -81,7 +86,8 @@ public class Tree<E extends Comparable<? super E>> {
             root = null;
             return;
         }
-
+        this.sortedArr = arr.clone();
+        Arrays.sort(sortedArr);
         ArrayList<BinaryNode<E>> nodes = new ArrayList<BinaryNode<E>>();
         root = new BinaryNode<E>(arr[0]);
         nodes.add(root);
@@ -108,6 +114,16 @@ public class Tree<E extends Comparable<? super E>> {
      */
     public void changeName(String name) {
         this.treeName = name;
+    }
+
+    public int getHeight() {
+        return getHeight(root, 0);
+    }
+
+    private int getHeight(BinaryNode<E> n, int count) {
+        if (n == null) return count - 1;
+        else count += 1;
+        return Math.max(getHeight(n.left, count), getHeight(n.right, count));
     }
 
     /**
@@ -246,9 +262,9 @@ public class Tree<E extends Comparable<? super E>> {
     private BinaryNode<E> find(BinaryNode<E> n, E element) {
         if (n == null) return null;
         if (n.element.compareTo(element) == 0) return n;
-        n = find(n.left, element);
-        n = find(n.right, element);
-        return n;
+        find(n.left, element);
+        find(n.right, element);
+        return null;
     }
 
     /**
@@ -273,7 +289,7 @@ public class Tree<E extends Comparable<? super E>> {
     private static BinaryNode<Integer> pruneK(BinaryNode<Integer> n, Integer k, INT sum) {
         // node doesn't exist
         if (n == null) return null;
-        // initialize left and right sons
+        // initialize left and right sums
         INT leftSum = new INT(sum.v + n.element);
         INT rightSum = new INT(leftSum.v);
         // prune left and right subtrees
@@ -286,6 +302,7 @@ public class Tree<E extends Comparable<? super E>> {
         return n;
     }
 
+
     private static class INT {
         int v;
         public INT(int a) {
@@ -295,57 +312,121 @@ public class Tree<E extends Comparable<? super E>> {
 
     /**
      * Find the least common ancestor of two nodes
-     *
+     * Big oh = O(n^2)
      * @param a first node
      * @param b second node
      * @return String representation of ancestor
      */
-//    public String lca(E a, E b) {
-//        BinaryNode<E> ancestor = null;
-//        if (a.compareTo(b) < 0) {
-//            ancestor = lca(root, a, b);
-//        } else {
-//            ancestor = lca(root, b, a);
-//        }
-//        if (ancestor == null) return "none";
-//        else return ancestor.toString();
-//    }
-//
-//    private BinaryNode<E> lca(BinaryNode<E> n, E a, E b) {
-//        // node doesn't exist
-//        if (n == null) return null;
-//        // a does not exist (will return null if b doesn't exist either)
-//        if (this.find(a) == null) return this.find(b);
-//        // b does not exist (will return null is a doesn't exist either)
-//        if (this.find(b) == null) return this.find(a);
-//        // a and b both exist
-//        else {
-//
-//        }
-//    }
+    public String lca(E a, E b) {
+        // path to element a
+        ArrayList<E> pathToA = new ArrayList<>();
+        // path to element b
+        ArrayList<E> pathToB = new ArrayList<>();
+        E lca = lca(root, a, b, pathToA, pathToB);
+        // return lca of a and b
+        if (lca != null) return lca.toString();
+        // lca is null (a and b don't exist)
+        else return "";
+    }
+
+    private E lca(BinaryNode<E> n, E a, E b, ArrayList<E> path1, ArrayList<E> path2) {
+        // a or b doesn't exist
+        if(!findPath(n, a, path1) || !findPath(n, b, path2)) return null;
+        // iterate through the two paths to find lca
+        int i;
+        for (i = 0; i < path1.size() && i < path2.size(); i++) {
+            // iteration has gone beyond where there are ancestors. i is the index of the most recent element.
+            if (path1.get(i).compareTo(path2.get(i)) != 0) break;
+        }
+        // return the element before i, which is the least common ancestor
+        return path1.get(i - 1);
+    }
+
+    private boolean findPath(BinaryNode<E> n, E element, ArrayList<E> path) {
+        // node doesn't exist
+        if (n == null) return false;
+        // add node to path
+        path.add(n.element);
+        // path has been found
+        if (n.element == element) return true;
+        // path found on left
+        if (findPath(n.left, element, path)) return true;
+        // path found on right
+        if (findPath(n.right, element, path)) return true;
+        // path not found. Remove last element and try on new branch.
+        path.remove(path.size() -1);
+        return false;
+    }
 
     /**
      * Balance the tree
+     * O(log n)
+     * This method erases everything in the tree and recreates it in a more balanced way
      */
     public void balanceTree() {
-//        root = balanceTree(root);
+        root = null;
+        root = balanceTree(sortedArr, 0, sortedArr.length);
+    }
+
+    private BinaryNode<E> balanceTree(E[] elements, int low, int high) {
+        // base case
+        if (low == high) return root;
+        // calculate mid index
+        int mid = (high + low) / 2;
+        // insert middle value into tree
+        this.bstInsert(elements[mid]);
+        // get the mid of the left side
+        balanceTree(elements, low, mid);
+        // get the mid of the right side
+        balanceTree(elements, mid + 1, high);
+        return root;
     }
 
 
     /**
      * In a BST, keep only nodes between range
-     *
+     * O(n)
      * @param a lowest value
      * @param b highest value
      */
     public void keepRange(E a, E b) {
+        root = keepRange(root, a, b);
+    }
+
+    private BinaryNode<E> keepRange(BinaryNode<E> n, E min, E max) {
+        // node doesn't exist
+        if (n == null) return null;
+        // remove any nodes outside of range in left and right subtrees
+        n.left = keepRange(n.left, min, max);
+        n.right = keepRange(n.right, min, max);
+        // element is less than min
+        if (n.element.compareTo(min) < 0) {
+            // reattach orphaned node to tree
+            return n.right;
+        }
+        // element is greater than max
+        if (n.element.compareTo(max) > 0) {
+            // reattach orphaned node to tree
+            return n.left;
+        }
+        // node is in range
+        return n;
     }
 
     /**
      * @return for the level with maximum sum, print the sum of the nodes
      */
-    public int maxLevelSum() {
-        return -999;
+    public Integer maxLevelSum() {
+        int max = 0;
+        for (int i = 0; i < this.getHeight(); i++) {
+            int curr = maxLevelSum(i);
+            if (max < curr) max = curr;
+        }
+        return max;
+    }
+
+    private Integer maxLevelSum(int level) {
+        if (level > this.height) return null;
     }
 
     /**
@@ -574,12 +655,12 @@ public class Tree<E extends Comparable<? super E>> {
         treeA.changeName("treeA after pruning 200");
         System.out.println(treeA.toString());
 
-//        // Assignment Problem 6
-//
-//        System.out.println(tree1.toString());
-//        System.out.println("tree1 Least Common Ancestor of (56,61) " + tree1.lca(56, 61) + ENDLINE);
-//
-//        System.out.println("tree1 Least Common Ancestor of (6,25) " + tree1.lca(6, 25) + ENDLINE);
+        // Assignment Problem 6
+
+        System.out.println(tree1.toString());
+        System.out.println("tree1 Least Common Ancestor of (56,61) " + tree1.lca(56, 61) + ENDLINE);
+
+        System.out.println("tree1 Least Common Ancestor of (6,25) " + tree1.lca(6, 25) + ENDLINE);
 
         // Assignment Problem 7
         Integer[] v7 = {20, 15, 10, 5, 8, 2, 100, 28, 42};
@@ -590,24 +671,24 @@ public class Tree<E extends Comparable<? super E>> {
         tree7.changeName("tree7 after balancing");
         System.out.println(tree7.toString());
 
-//        // Assignment Problem 8
-//        System.out.println(tree1.toString());
-//        tree1.keepRange(10, 50);
-//        tree1.changeName("tree1 after keeping only nodes between 10 and 50");
-//        System.out.println(tree1.toString());
-//
-//        tree7.changeName("Tree 7");
-//        System.out.println(tree7.toString());
-//        tree7.keepRange(8, 85);
-//        tree7.changeName("tree7 after keeping only nodes between 8  and 85");
-//        System.out.println(tree7.toString());
-//
-//        // Assignment Problem 9
-//        Integer[] v9 = {66, -15, -83, 3, -10, -7, 65, 16, 75, 70, 71, 83, 200, 90};
-//        Tree<Integer> tree4 = new Tree<Integer>(v9, "Tree4:");
-//        System.out.println(tree4.toString());
-//        tree4.maxLevelSum();
-//
+        // Assignment Problem 8
+        System.out.println(tree1.toString());
+        tree1.keepRange(10, 50);
+        tree1.changeName("tree1 after keeping only nodes between 10 and 50");
+        System.out.println(tree1.toString());
+
+        tree7.changeName("Tree 7");
+        System.out.println(tree7.toString());
+        tree7.keepRange(8, 85);
+        tree7.changeName("tree7 after keeping only nodes between 8  and 85");
+        System.out.println(tree7.toString());
+
+        // Assignment Problem 9
+        Integer[] v9 = {66, -15, -83, 3, -10, -7, 65, 16, 75, 70, 71, 83, 200, 90};
+        Tree<Integer> tree4 = new Tree<Integer>(v9, "Tree4:");
+        System.out.println(tree4.toString());
+        System.out.println(tree4.maxLevelSum());
+
 //        // Assignment Problem 10
 //        ArrayList<Integer> leaves = new ArrayList<Integer>();
 //        Integer[] preorder1 = {10, 3, 1, 7, 18, 13};
